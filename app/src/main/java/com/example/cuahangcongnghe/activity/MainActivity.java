@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
@@ -23,7 +24,9 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.cuahangcongnghe.R;
 import com.example.cuahangcongnghe.adapter.LoaispAdapter;
+import com.example.cuahangcongnghe.adapter.SanphamAdapter;
 import com.example.cuahangcongnghe.model.Loaisp;
+import com.example.cuahangcongnghe.model.Sanpham;
 import com.example.cuahangcongnghe.ultil.CheckConnection;
 import com.example.cuahangcongnghe.ultil.Server;
 import com.google.android.material.navigation.NavigationView;
@@ -48,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     int id = 0;
     String tenloaisp = "";
     String hinhanhloaisanpham = "";
+    ArrayList<Sanpham> mangsanpham;
+    SanphamAdapter sanphamAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         if(CheckConnection.haveNetworkConnection(getApplicationContext())){
             ActionBar();
             GetDuLieuLoaisp();
+            GetDuLieuSPMoiNhat();
         } else{
             CheckConnection.ShowToast_Short(getApplicationContext(),"Kiểm tra lại kết nối.");
             finish();
@@ -64,6 +70,50 @@ public class MainActivity extends AppCompatActivity {
 
 //        ActionViewFlipper();
     }
+
+    private void GetDuLieuSPMoiNhat() {
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Server.Duongdansanphammoinhat, new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+                if (response != null){
+                    int ID = 0;
+                    String Tensanpham = "";
+                    Integer Giasanpham = 0;
+                    String Hinhanhsanpham = "";
+                    String Motasanpham = "";
+                    int IDsanpham = 0;
+                    for (int i = 0; i<response.length();i++){
+                        try {
+                            JSONObject jsonObject = response.getJSONObject(i);
+                            ID = jsonObject.getInt("id");
+                            Tensanpham = jsonObject.getString("tensp");
+                            Giasanpham = jsonObject.getInt("giasp");
+                            Hinhanhsanpham = jsonObject.getString("hinhanhsp");
+                            Motasanpham = jsonObject.getString("motasp");
+                            IDsanpham = jsonObject.getInt("idsanpham");
+
+                mangsanpham.add(new Sanpham(ID, Tensanpham,Giasanpham, Hinhanhsanpham, Motasanpham, IDsanpham));
+                sanphamAdapter.notifyDataSetChanged();
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }
+        );
+        requestQueue.add(jsonArrayRequest);
+    }
+
     private void GetDuLieuLoaisp(){
         RequestQueue requestQueue = Volley.newRequestQueue (getApplicationContext());
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Server.DuongdanLoaisp, new Response.Listener<JSONArray>() {
@@ -82,8 +132,8 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                     }
-                    mangloaisp.add(3,new Loaisp(0,"Liên Hệ", "https://img.icons8.com/material-two-tone/24/undefined/phone--v1.png"));
-                    mangloaisp.add(4,new Loaisp(0,"Thông Tin", "https://img.icons8.com/carbon-copy/100/undefined/dratini.png"));
+                    mangloaisp.add(4,new Loaisp(0,"Liên Hệ", "https://img.icons8.com/clouds/100/undefined/apple-phone.png"));
+                    mangloaisp.add(5,new Loaisp(0,"Thông Tin", "https://img.icons8.com/clouds/100/undefined/information.png"));
                 }
             }
         }, new Response.ErrorListener() {
@@ -139,8 +189,13 @@ public class MainActivity extends AppCompatActivity {
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerlayout);
         mangloaisp = new ArrayList<>();
         //đọc dữ liệu trang chủ đầu tiên
-        mangloaisp.add(0, new Loaisp(0,"Trang Chủ", "https://img.icons8.com/windows/32/undefined/home-page.png"));
+        mangloaisp.add(0, new Loaisp(0,"Trang Chủ", "https://img.icons8.com/clouds/100/undefined/home.png"));
         loaispAdapter = new LoaispAdapter(mangloaisp,getApplicationContext());
         listViewmanhinhchinh.setAdapter(loaispAdapter);
+        mangsanpham = new ArrayList<>();
+        sanphamAdapter = new SanphamAdapter(getApplicationContext(),mangsanpham);
+        recyclerViewmanhinhchinh.setHasFixedSize(true);
+        recyclerViewmanhinhchinh.setLayoutManager(new GridLayoutManager(getApplicationContext(),2));
+        recyclerViewmanhinhchinh.setAdapter(sanphamAdapter);
     }
 }
